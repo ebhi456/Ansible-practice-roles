@@ -1,0 +1,29 @@
+---
+- name: AWX Demo - Worker Information
+  hosts: workers
+  gather_facts: true
+
+  tasks:
+
+    - name: Display hostname
+      ansible.builtin.debug:
+        msg: "Hostname: {{ ansible_facts['hostname'] }}"
+
+    - name: Display private IP
+      ansible.builtin.debug:
+        msg: "IP Address: {{ ansible_facts['default_ipv4']['address'] }}"
+
+    - name: Display operating system
+      ansible.builtin.debug:
+        msg: "OS: {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}"
+
+    - name: Display CPU information
+      ansible.builtin.debug:
+        msg: "CPU cores: {{ ansible_facts['processor_vcpus'] }}"
+
+    - name: Display memory information
+      ansible.builtin.debug:
+        msg: "Memory: {{ ansible_facts['memtotal_mb'] }} MB"
+
+    - name: Verify connectivity
+      ansible.builtin.ping:
