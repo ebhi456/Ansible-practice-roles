@@ -1,0 +1,31 @@
+---
+- name: Deploy Docker Application
+  hosts: workers
+  become: true
+
+  tasks:
+
+    - name: Pull Nginx Docker image
+      community.docker.docker_image:
+        name: nginx
+        tag: latest
+        source: pull
+
+    - name: Run Nginx container
+      community.docker.docker_container:
+        name: ansible-nginx
+        image: nginx:latest
+        state: started
+        restart_policy: unless-stopped
+        ports:
+          - "8080:80"
+
+    - name: Verify Nginx container
+      ansible.builtin.command:
+        cmd: docker ps --filter name=ansible-nginx
+      register: docker_status
+      changed_when: false
+
+    - name: Display container status
+      ansible.builtin.debug:
+        var: docker_status.stdout
