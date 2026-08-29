@@ -1,0 +1,58 @@
+---
+- name: AWX Demo - Server Configuration
+  hosts: workers
+  become: true
+  gather_facts: true
+
+  tasks:
+
+    - name: Display target hostname
+      ansible.builtin.debug:
+        msg: "Configuring {{ ansible_facts['hostname'] }}"
+
+    - name: Update apt package cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install required packages
+      ansible.builtin.apt:
+        name:
+          - curl
+          - wget
+          - git
+          - unzip
+          - vim
+          - net-tools
+          - ca-certificates
+        state: present
+
+    - name: Install Docker
+      ansible.builtin.apt:
+        name: docker.io
+        state: present
+
+    - name: Ensure Docker service is running
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Add ubuntu user to docker group
+      ansible.builtin.user:
+        name: ubuntu
+        groups: docker
+        append: true
+
+    - name: Verify Docker installation
+      ansible.builtin.command:
+        cmd: docker --version
+      register: docker_version
+      changed_when: false
+
+    - name: Display Docker version
+      ansible.builtin.debug:
+        msg: "{{ docker_version.stdout }}"
+
+    - name: Verify server connectivity
+      ansible.builtin.ping:
