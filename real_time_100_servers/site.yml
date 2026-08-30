@@ -1,0 +1,62 @@
+---
+- name: Install and configure NGINX on web hosts
+  hosts: nginx
+  become: true
+  gather_facts: true
+
+  vars:
+    nginx_service_name: nginx
+
+  tasks:
+    - name: Update apt cache on Debian-based hosts
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      when: ansible_os_family == 'Debian'
+
+    - name: Update yum cache on RedHat-based hosts
+      ansible.builtin.yum:
+        update_cache: true
+      when: ansible_os_family == 'RedHat'
+
+    - name: Install NGINX
+      ansible.builtin.package:
+        name: "{{ nginx_package_name }}"
+        state: present
+
+    - name: Ensure NGINX service is running
+      ansible.builtin.service:
+        name: "{{ nginx_service_name }}"
+        state: started
+        enabled: true
+
+- name: Install and configure RabbitMQ on message hosts
+  hosts: rabbitmq
+  become: true
+  gather_facts: true
+
+  vars:
+    rabbitmq_service_name: rabbitmq-server
+
+  tasks:
+    - name: Update apt cache on Debian-based hosts
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      when: ansible_os_family == 'Debian'
+
+    - name: Update yum cache on RedHat-based hosts
+      ansible.builtin.yum:
+        update_cache: true
+      when: ansible_os_family == 'RedHat'
+
+    - name: Install RabbitMQ server
+      ansible.builtin.package:
+        name: "{{ rabbitmq_package_name }}"
+        state: present
+
+    - name: Ensure RabbitMQ service is running
+      ansible.builtin.service:
+        name: "{{ rabbitmq_service_name }}"
+        state: started
+        enabled: true

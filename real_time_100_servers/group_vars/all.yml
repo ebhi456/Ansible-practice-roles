@@ -1,0 +1,7 @@
+---
+ansible_user: ubuntu
+ansible_become: true
+common_packages:
+  - curl
+  - unzip
+  - wget
