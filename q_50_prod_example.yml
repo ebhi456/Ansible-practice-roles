@@ -1,0 +1,71 @@
+---
+- name: Deploy application configuration safely
+  hosts: production
+  become: true
+
+  # Deploy only 5 servers at a time
+  serial: 5
+
+  # Stop the deployment if more than 20% of a batch fails
+  max_fail_percentage: 20
+
+  vars:
+    config_file: /etc/myapp/myapp.conf
+    backup_file: /etc/myapp/myapp.conf.backup
+
+  pre_tasks:
+
+    - name: Check server connectivity
+      ansible.builtin.ping:
+
+    - name: Check application service status
+      ansible.builtin.systemd:
+        name: myapp
+        state: started
+      check_mode: true
+
+  tasks:
+
+    - name: Backup current configuration
+      ansible.builtin.copy:
+        src: "{{ config_file }}"
+        dest: "{{ backup_file }}"
+        remote_src: true
+        backup: true
+
+    - name: Deploy new configuration
+      ansible.builtin.template:
+        src: templates/myapp.conf.j2
+        dest: "{{ config_file }}"
+        owner: root
+        group: root
+        mode: "0644"
+        validate: "/usr/local/bin/myapp-config-check %s"
+      notify: Restart myapp
+
+    - name: Wait for application health check
+      ansible.builtin.uri:
+        url: "http://localhost:8080/health"
+        status_code: 200
+      register: health_check
+      retries: 5
+      delay: 10
+      until: health_check.status == 200
+
+  handlers:
+
+    - name: Restart myapp
+      ansible.builtin.systemd:
+        name: myapp
+        state: restarted
+
+  post_tasks:
+
+    - name: Final application health check
+      ansible.builtin.uri:
+        url: "http://localhost:8080/health"
+        status_code: 200
+      register: final_health
+      retries: 5
+      delay: 10
+      until: final_health.status == 200
